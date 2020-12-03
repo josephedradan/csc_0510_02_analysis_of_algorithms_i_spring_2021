@@ -50,13 +50,13 @@ Explanation:
 Reference:
 
 """
-from josephs_resources.decorators.v1.callgraph_simple import callgraph, create_callgraph
+# from josephs_resources.decorators.v1.callgraph_simple import callgraph, create_callgraph
 
 from typing import FrozenSet, Set, List, Tuple
 
 
 # Recursive call
-@callgraph
+# @callgraph
 def dfs_recursive(list_list_given: List[List[int]],
                   index_row: int = 0,
                   set_indices_traversed: Set = None,
@@ -130,7 +130,7 @@ def dfs_recursive(list_list_given: List[List[int]],
         # DEBUG PRINTING
         # print("Current Row: {}".format(row_current))
         # print("Row Index: {}".format(index_row))
-        # print("Set: {}".format(set_indices_traversed))
+        # print("Set Indices Traversed: {}".format(set_indices_traversed))
         # print("index_list_solution_possible: {}".format(index_list_solution_possible))
         # print("list_solution_possible: {}".format(list_solution_possible))
         # print("solution_possible: {}".format(solution_possible))
@@ -355,12 +355,12 @@ if __name__ == '__main__':
     #               [2, 3, 0, 6],
     #               [4, 5, 6, 0]]
 
-    list_given = [[0, 7, 1, 0, 0, 8],
-                  [7, 0, 5, 0, 9, 6],
-                  [1, 5, 0, 4, 0, 0],
-                  [0, 0, 4, 0, 2, 0],
-                  [0, 9, 0, 2, 0, 3],
-                  [8, 6, 0, 0, 3, 0]]
+    # list_given = [[0, 7, 1, 0, 0, 8],
+    #               [7, 0, 5, 0, 9, 6],
+    #               [1, 5, 0, 4, 0, 0],
+    #               [0, 0, 4, 0, 2, 0],
+    #               [0, 9, 0, 2, 0, 3],
+    #               [8, 6, 0, 0, 3, 0]]
 
     set_frozenset_solution = dfs_recursive(list_given)
 
@@ -382,4 +382,4 @@ if __name__ == '__main__':
             print(f"\t{str(solution_partial):<{length_of_a_row * 3 + 1}} {sum(solution_partial)}")
         print()
 
-    create_callgraph()
+    # create_callgraph()
