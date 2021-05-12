@@ -20,7 +20,7 @@ Reference:
 
 """
 
-from algorithm_analyzer.algorithm_recorder import AlgorithmRecorder
+from pycode_recorder.code_recorder import AlgorithmRecorder
 
 algorithm_recorder = AlgorithmRecorder()
 

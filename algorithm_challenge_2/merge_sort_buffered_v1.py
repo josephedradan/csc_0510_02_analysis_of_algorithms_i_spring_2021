@@ -47,7 +47,7 @@ from functools import wraps
 from pprint import pprint
 from typing import Dict, Union, List, Tuple
 
-# from algorithm_analyzer.algorithm_recorder import AlgorithmRecorder
+# from pycode_recorder.algorithm_recorder import AlgorithmRecorder
 # from josephs_resources.decorators.callgraph_simple import create_callgraph, callgraph
 
 # algorithm_recorder = AlgorithmRecorder()

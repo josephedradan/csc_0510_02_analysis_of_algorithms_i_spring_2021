@@ -29,7 +29,7 @@ Reference:
 
 """
 
-from algorithm_analyzer.algorithm_recorder import AlgorithmRecorder
+from pycode_recorder.code_recorder import AlgorithmRecorder
 from josephs_resources.decorators.callgraph_simple import callgraph, create_callgraph
 
 algorithm_recorder = AlgorithmRecorder()

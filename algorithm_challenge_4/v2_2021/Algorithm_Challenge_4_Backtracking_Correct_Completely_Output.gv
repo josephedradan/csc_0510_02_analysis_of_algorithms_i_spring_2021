@@ -1,0 +1,7 @@
+strict digraph {
+	graph [rankdir=LR]
+	2 [label="([(0, 1)])"]
+	1 -> 2
+	1 [label="()"]
+	1 [penwidth=3]
+}
