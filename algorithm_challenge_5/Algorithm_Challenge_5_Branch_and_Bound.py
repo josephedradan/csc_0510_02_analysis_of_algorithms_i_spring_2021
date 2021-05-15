@@ -1028,6 +1028,7 @@ def branch_and_bound_node_exit_entry(matrix,
                 if index_column_node_possible == index_row_node_potential:
                     exit_condition_valid = False
                     entry_condition_valid = False
+                    continue
 
                 ########################### ROW ###########################
                 ########################### ROW ###########################
@@ -1043,20 +1044,22 @@ def branch_and_bound_node_exit_entry(matrix,
                 # SELECTED IN PREVIOUS (WILL ELIMINATE SLEF CALCULATION) (MAKES AN EMPTY SOLUTION)
                 if index_row_node_selected in set_exit_index_node_traveled_to_previous:
                     exit_condition_valid = False
-
+                    continue
                 # POTENTIAL IN PREVIOUS
                 if index_row_node_potential in set_exit_index_node_traveled_to_previous:
                     exit_condition_valid = False
-
+                    continue
                 # POTENTIAL IS PARENT
                 if index_row_node_potential == _exit_index_node_parent:
                     exit_condition_valid = False
+                    continue
 
                 # POTENTIAL FOR THE END
                 if (index_row_node_potential == _index_node_start and
                         len(solution_container_current.get_exit_list_node_path()) < len(matrix)):
                     # print("index_row_node_potential is index_node_start, but is not the Last Node to yourself")
                     exit_condition_valid = False
+                    continue
 
                 """
                 Special condition for when index_row_node_selected == index_row_node_potential. This condition is to
@@ -1086,11 +1089,13 @@ def branch_and_bound_node_exit_entry(matrix,
                         """
                         if index_column_node_possible == solution_container_current.get_index_node_start():
                             exit_condition_valid = False
+                            continue
 
                 # POSSIBLE IN THE SET (WE DONT HAVE SET ANYMORE) ***************************
                 if (index_column_node_possible in set_exit_index_node_traveled_to_previous or
                         index_column_node_possible == index_row_node_selected):
                     exit_condition_valid = False
+                    continue
 
                 if exit_condition_valid:
                     pass
@@ -1210,7 +1215,7 @@ def branch_and_bound_node_exit_entry(matrix,
         exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column = (
                 exit_sum_value_min_plus_sum_cost_path_direct_full + sum_list_value_min_per_column
         )
-        print("(Exit) Sum of Minimum values + Cost of path direct full + sum_list_value_min_per_column: {}".format(
+        print("(Exit) Sum of Minimum values + Cost of path direct full + Sum Minimum Value in column: {}".format(
             exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column))
         print()
 
