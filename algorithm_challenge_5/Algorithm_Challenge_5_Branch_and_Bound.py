@@ -1182,26 +1182,43 @@ def branch_and_bound_node_exit_entry(matrix,
                 #################################
                 #################################
 
+        sum_list_value_min_per_row = 0
+        sum_list_value_min_per_column = 0
+
         for i, j in zip(list_value_min_per_row, list_value_min_per_column):
             if isinstance(i, int):
-                exit_sum_value_min_plus_sum_cost_path_direct_full += i
+                sum_list_value_min_per_row += i
             if isinstance(j, int):
-                entry_sum_value_min_plus_sum_cost_path_direct_full += j
+                sum_list_value_min_per_column += j
+
+        exit_sum_value_min_plus_sum_cost_path_direct_full += sum_list_value_min_per_row
+        entry_sum_value_min_plus_sum_cost_path_direct_full += sum_list_value_min_per_column
 
         print("\tMinimum Value in row:", list_value_min_per_row)
+        print("\tSum Minimum Value in row:", sum_list_value_min_per_row)
         print("\tMinimum Value in column:", list_value_min_per_column)
+        print("\tSum Minimum Value in column:", sum_list_value_min_per_column)
+        print("\tMinimum Value in row + Minimum Value in column:",
+              sum_list_value_min_per_row + sum_list_value_min_per_column)
         print("(Exit) Sum of Minimum values + Cost of path direct full: {}".format(
             exit_sum_value_min_plus_sum_cost_path_direct_full))
         print("(Entry) Sum of Minimum values + Cost of path direct full: {}".format(
             entry_sum_value_min_plus_sum_cost_path_direct_full))
         print("(Exit + Entry) Sum of Minimum values + Cost of path direct full: {}".format(
-            exit_sum_value_min_plus_sum_cost_path_direct_full + entry_sum_value_min_plus_sum_cost_path_direct_full
-        ))
+            exit_sum_value_min_plus_sum_cost_path_direct_full + entry_sum_value_min_plus_sum_cost_path_direct_full)
+        )
+        exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column = (
+                exit_sum_value_min_plus_sum_cost_path_direct_full + sum_list_value_min_per_column
+        )
+        print("(Exit) Sum of Minimum values + Cost of path direct full + sum_list_value_min_per_column: {}".format(
+            exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column))
         print()
 
         solution_container_new = SolutionContainer(solution_container_current)
 
-        solution_container_new.set_exit_sum_cost_path_complete(exit_sum_value_min_plus_sum_cost_path_direct_full)
+        # solution_container_new.set_exit_sum_cost_path_complete(exit_sum_value_min_plus_sum_cost_path_direct_full)
+        solution_container_new.set_exit_sum_cost_path_complete(
+            exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column)
         solution_container_new.set_exit_index_node_parent(index_row_node_selected)
         solution_container_new.set_exit_sum_cost_path_direct_full(exit_sum_cost_path_direct_full_new)
         solution_container_new.add_to_exit_list_node_path(index_row_node_selected)
@@ -1212,7 +1229,7 @@ def branch_and_bound_node_exit_entry(matrix,
         # solution_container_new.add_to_entry_list_node_path(index_row_node_selected)
 
         # # TODO NEED TO REMOVE ME LATER TO WORK PROPERLY
-        if (exit_sum_value_min_plus_sum_cost_path_direct_full != exit_sum_cost_path_direct_full_new):
+        if (exit_sum_value_min_plus_sum_cost_path_direct_full > exit_sum_cost_path_direct_full_new):
             # Add Solution Container to the Priority Queue.
             heapq.heappush(heap_queue_priority, solution_container_new)
             # print(heap_queue_priority)
