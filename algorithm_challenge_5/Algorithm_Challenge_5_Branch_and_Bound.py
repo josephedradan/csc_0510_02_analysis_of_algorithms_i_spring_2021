@@ -68,10 +68,10 @@ class SolutionContainerSingle:
 
             ###
             self.index_node_start: Union[int] = index_node_start
-            self.exit_sum_cost_path_complete = 0
-            self.exit_index_node_parent: Union[int] = index_node_start
-            self.exit_list_node_path: Union[List[int]] = [index_node_start]
-            self.exit_sum_cost_path_direct_full = 0
+            self.sum_cost_path_complete = 0
+            self.index_node_target: Union[int] = index_node_start
+            self.list_node_path: Union[List[int]] = [index_node_start]
+            self.sum_cost_path_direct_full = 0
 
         elif isinstance(given, SolutionContainerSingle):
             """
@@ -88,47 +88,48 @@ class SolutionContainerSingle:
             solution_container_single = given
             ###
             self.index_node_start: Union[int] = solution_container_single.get_index_node_start()
-            self.exit_sum_cost_path_complete: Union[int] = 0
-            self.exit_index_node_parent: Union[int] = 0
-            self.exit_list_node_path: Union[List[int]] = solution_container_single.get_list_node_path().copy()
-            self.exit_sum_cost_path_direct_full: Union[int] = 0
+            self.sum_cost_path_complete: Union[int] = 0
+            self.index_node_target: Union[int] = 0
+            self.list_node_path: Union[List[int]] = solution_container_single.get_list_node_path().copy()
+            self.sum_cost_path_direct_full: Union[int] = 0
 
     def get_sum_cost_path_complete(self) -> int:
-        return self.exit_sum_cost_path_complete
+        return self.sum_cost_path_complete
 
     def set_sum_cost_path_complete(self, value: int):
-        self.exit_sum_cost_path_complete = value
+        self.sum_cost_path_complete = value
 
     def get_index_node_start(self) -> int:
         return self.index_node_start
 
     def add_to_list_node_path(self, index_node: int):
-        self.exit_list_node_path.append(index_node)
+        self.list_node_path.append(index_node)
 
     def get_list_node_path(self) -> List:
-        return self.exit_list_node_path
+        return self.list_node_path
 
     def get_sum_cost_path_direct_full(self) -> int:
-        return self.exit_sum_cost_path_direct_full
+        return self.sum_cost_path_direct_full
 
     def set_sum_cost_path_direct_full(self, value: int):
-        self.exit_sum_cost_path_direct_full = value
+        self.sum_cost_path_direct_full = value
 
-    def get_index_node_parent(self) -> int:
-        return self.exit_index_node_parent
+    def get_index_node_target(self) -> int:
+        return self.index_node_target
 
-    def set_index_node_parent(self, index_node_parent: int):
-        self.exit_index_node_parent = index_node_parent
+    def set_index_node_target(self, index_node_target: int):
+        self.index_node_target = index_node_target
 
     def __str__(self):
         return "({}, {})".format(self.get_sum_cost_path_complete(),
-                                 self.exit_list_node_path)
+                                 self.list_node_path)
 
     def __repr__(self):
         return self.__str__()
 
-    def __lt__(self, path_solution: SolutionContainer):
-        return self.get_sum_cost_path_complete() < path_solution.get_sum_cost_path_complete()
+    def __lt__(self, solution_container_single: SolutionContainerSingle):
+        return ((self.get_sum_cost_path_complete(), -1 * len(self.list_node_path)) <
+                (solution_container_single.get_sum_cost_path_complete(), -1 * len(self.list_node_path)))
 
 
 class SolutionContainer:
@@ -807,8 +808,8 @@ def branch_and_bound_node_entry(matrix,
 
 @decorator_callable_count(dict_k_callable_v_amount_call_given=dict_k_callable_v_amount_call)
 def branch_and_bound_node_exit_entry(matrix,
-                                     heap_queue_priority: List[Tuple[int, int, List[int], int]],
-                                     solution_container_current: SolutionContainer
+                                     heap_queue_priority: List[SolutionContainerSingle],
+                                     solution_container_single_current: Union[SolutionContainerSingle]
                                      ) -> int:
     """
     Notes:
@@ -828,7 +829,7 @@ def branch_and_bound_node_exit_entry(matrix,
 
     :param matrix: Matrix
     :param heap_queue_priority: The Priority Queue
-    :param solution_container_current:
+    :param solution_container_single_current:
 
     :return:
     """
@@ -854,23 +855,25 @@ def branch_and_bound_node_exit_entry(matrix,
         B -> {A} = 2
 
     """
-    set_exit_index_node_traveled_to = set(solution_container_current.get_exit_list_node_path()[
+    set_exit_index_node_traveled_to = set(solution_container_single_current.get_list_node_path()[
                                           1:])  # TODO UNNCESSSARY BECASE WE FUCK THE SET UP BECAUEAS WE TRAVEL TO ALL OF THEM
 
-    set_entry_index_node_traveled_to = set(solution_container_current.get_entry_list_node_path()[1:])
+    set_entry_index_node_traveled_to = set(solution_container_single_current.get_list_node_path()[1:])
 
     set_exit_index_node_traveled_to_previous = set_exit_index_node_traveled_to.copy()
 
     set_entry_index_node_traveled_to_previous = set_entry_index_node_traveled_to.copy()
 
     # Parent
-    _exit_index_node_parent = solution_container_current.get_exit_index_node_parent()
+    _exit_index_node_parent = solution_container_single_current.get_index_node_target()
 
     # Child
-    _entry_index_node_child = solution_container_current.get_entry_index_node_child()
+    _entry_index_node_child = solution_container_single_current.get_index_node_target()
 
     # Start
-    _index_node_start = solution_container_current.get_index_node_start()
+    _index_node_start = solution_container_single_current.get_index_node_start()
+
+    return_value = -1
 
     for index_row_node_selected, row_main in enumerate(matrix):
 
@@ -887,10 +890,8 @@ def branch_and_bound_node_exit_entry(matrix,
         Skip the Node Selected if the Node Selected is the Node Start (Can't jump to yourself until the end).
         Note that the Node Start is NOT added to index_row_node_selected to make the algorithm easier to use.
         """
-        if (index_row_node_selected == solution_container_current.get_index_node_start() and
-                (len(solution_container_current.get_exit_list_node_path()) < len(matrix) and
-                 len(solution_container_current.get_entry_list_node_path()) < len(matrix)
-                )):
+        if (index_row_node_selected == solution_container_single_current.get_index_node_start() and
+                len(solution_container_single_current.get_list_node_path()) < len(matrix)):
             # print("Not the ending")
             continue
 
@@ -922,10 +923,10 @@ def branch_and_bound_node_exit_entry(matrix,
         entry_sum_cost_path_direct_selected_child = matrix[index_row_node_selected][_entry_index_node_child]
 
         exit_sum_cost_path_direct_full_new = (exit_sum_cost_path_direct_parent_selected +
-                                              solution_container_current.get_exit_sum_cost_path_direct_full())
+                                              solution_container_single_current.get_sum_cost_path_direct_full())
 
         entry_sum_cost_path_direct_full_new = (entry_sum_cost_path_direct_selected_child +
-                                               solution_container_current.get_entry_sum_cost_path_direct_full())
+                                               solution_container_single_current.get_sum_cost_path_direct_full())
 
         # A Sum of the Sum of the Minimum Value Sum of rows + Sum of the Full Direct Path
         exit_sum_value_min_plus_sum_cost_path_direct_full += exit_sum_cost_path_direct_full_new
@@ -934,13 +935,13 @@ def branch_and_bound_node_exit_entry(matrix,
 
         print("(Exit) Node Parent {} -> Node Selected {}: {}".format(_exit_index_node_parent,
                                                                      index_row_node_selected,
-                                                                     exit_sum_value_min_plus_sum_cost_path_direct_full))
+                                                                     exit_sum_cost_path_direct_full_new))
 
         # exit_sum_cost_path_direct_full_new = exit_sum_cost_path_direct_parent_selected + solution_container_current.get_entry_index_node_child()
 
         print("(Entry) Node Selected {} -> Node Child {}: {}".format(index_row_node_selected,
                                                                      _entry_index_node_child,
-                                                                     entry_sum_value_min_plus_sum_cost_path_direct_full))
+                                                                     entry_sum_cost_path_direct_full_new))
 
         """
         Add Node Child to set of Nodes traveled to (AKA Set of Nodes Excluded)
@@ -959,42 +960,6 @@ def branch_and_bound_node_exit_entry(matrix,
 
         print("set_entry_index_node_traveled_to", set_entry_index_node_traveled_to)
         print("set_entry_index_node_traveled_to_previous", set_entry_index_node_traveled_to_previous)
-
-        """
-        It's not possible to make Node Potential when every node has been traversed through except for the last node.
-        If you assume that the dimensions of the matrix are the same, then you can say that the the size of the matrix
-        represents the nodes traversed.
-
-        Basically, you have traversed to every node, so you don't need to loop through the matrix and all you
-        really need to do is add list_node_path to the path and you have traveled to every node and have gone
-        back to the Node Starting.
-        """
-        if (len(solution_container_current.get_exit_list_node_path()) == len(matrix) or
-                len(solution_container_current.get_entry_list_node_path()) == len(matrix)):
-            print("It's Not possible to make Node Potentials")
-
-            solution_container_new = SolutionContainer(solution_container_current)
-
-            solution_container_new.set_exit_sum_cost_path_complete(exit_sum_value_min_plus_sum_cost_path_direct_full)
-            solution_container_new.set_exit_index_node_parent(index_row_node_selected)
-
-            if len(solution_container_current.get_exit_list_node_path()) == len(matrix):
-                solution_container_new.add_to_exit_list_node_path(index_row_node_selected)
-
-            solution_container_new.set_entry_sum_cost_path_complete(entry_sum_value_min_plus_sum_cost_path_direct_full)
-            solution_container_new.set_entry_index_node_child(index_row_node_selected)
-
-            if len(solution_container_current.get_entry_list_node_path()) == len(matrix):
-                solution_container_new.add_to_entry_list_node_path(index_row_node_selected)
-
-            # Add Solution Container New to priority queue.
-            heapq.heappush(heap_queue_priority, solution_container_new)
-
-            """
-            Return the newly created Upper. Uppers are only made when a path has traversed all nodes and has returned 
-            to the Node Starting.
-            """
-            return solution_container_new.get_sum_cost_path_complete()
 
         # Current minimum Value (If the code crashes because of this, then my algorithm has a bug)
         list_value_min_per_row = [None] * len(matrix)
@@ -1054,7 +1019,7 @@ def branch_and_bound_node_exit_entry(matrix,
 
                 # POTENTIAL FOR THE END
                 if (index_row_node_potential == _index_node_start and
-                        len(solution_container_current.get_exit_list_node_path()) < len(matrix)):
+                        len(solution_container_single_current.get_list_node_path()) < len(matrix)):
                     # print("index_row_node_potential is index_node_start, but is not the Last Node to yourself")
                     exit_condition_valid = False
 
@@ -1071,7 +1036,7 @@ def branch_and_bound_node_exit_entry(matrix,
                     Node Starting.
                     """
 
-                    if len(solution_container_current.get_exit_list_node_path()) < (len(matrix) - 1):
+                    if len(solution_container_single_current.get_list_node_path()) < (len(matrix) - 1):
                         """
                         Check if index_node_parent is index_column_node_possible, if this condition is true, then
                         index_row_node_selected should not calculate the distance for index_column_node_possible. If
@@ -1084,7 +1049,7 @@ def branch_and_bound_node_exit_entry(matrix,
                             C -> {A, D} = 5
                             D -> {A, C} = 6
                         """
-                        if index_column_node_possible == solution_container_current.get_index_node_start():
+                        if index_column_node_possible == solution_container_single_current.get_index_node_start():
                             exit_condition_valid = False
 
                 # POSSIBLE IN THE SET (WE DONT HAVE SET ANYMORE) ***************************
@@ -1139,7 +1104,7 @@ def branch_and_bound_node_exit_entry(matrix,
                     purpose of this check is to only allow its body to run when their are still Node Potentials
                     excluding the Node Potential that equals the Node Starting.
                     """
-                    if len(solution_container_current.get_entry_list_node_path()) < (len(matrix) - 1):
+                    if len(solution_container_single_current.get_list_node_path()) < (len(matrix) - 1):
                         """
                         Basically, when the Node Potential equals the Node Starting while there exists Node Potentials,
                         excluding the Node Potential that equals the Node Starting, then skip the Node Possible that
@@ -1199,28 +1164,56 @@ def branch_and_bound_node_exit_entry(matrix,
         ))
         print()
 
-        solution_container_new = SolutionContainer(solution_container_current)
+        if (exit_sum_value_min_plus_sum_cost_path_direct_full > exit_sum_cost_path_direct_full_new):
+            solution_container_single_exit_new = SolutionContainerSingle(solution_container_single_current)
 
-        solution_container_new.set_exit_sum_cost_path_complete(exit_sum_value_min_plus_sum_cost_path_direct_full)
-        solution_container_new.set_exit_index_node_parent(index_row_node_selected)
-        solution_container_new.set_exit_sum_cost_path_direct_full(exit_sum_cost_path_direct_full_new)
-        solution_container_new.add_to_exit_list_node_path(index_row_node_selected)
+            solution_container_single_exit_new.set_sum_cost_path_complete(
+                exit_sum_value_min_plus_sum_cost_path_direct_full)
+            solution_container_single_exit_new.set_index_node_target(index_row_node_selected)
+            solution_container_single_exit_new.set_sum_cost_path_direct_full(exit_sum_cost_path_direct_full_new)
+            solution_container_single_exit_new.add_to_list_node_path(index_row_node_selected)
 
-        # solution_container_new.set_entry_sum_cost_path_complete(entry_sum_value_min_plus_sum_cost_path_direct_full)
-        # solution_container_new.set_entry_index_node_child(index_row_node_selected)
-        # solution_container_new.set_entry_sum_cost_path_direct_full(entry_sum_cost_path_direct_full_new)
-        # solution_container_new.add_to_entry_list_node_path(index_row_node_selected)
+            if len(solution_container_single_exit_new.get_list_node_path()) == len(matrix):
+                sum_value = matrix[index_row_node_selected][_index_node_start]
 
-        # # TODO NEED TO REMOVE ME LATER TO WORK PROPERLY
-        if (exit_sum_value_min_plus_sum_cost_path_direct_full != exit_sum_cost_path_direct_full_new):
+                exit_sum_cost_path_direct_full_new += sum_value
+
+                solution_container_single_exit_new.set_sum_cost_path_complete(
+                    exit_sum_value_min_plus_sum_cost_path_direct_full)
+                solution_container_single_exit_new.set_sum_cost_path_direct_full(exit_sum_cost_path_direct_full_new)
+
+                solution_container_single_exit_new.set_index_node_target(_index_node_start)
+                solution_container_single_exit_new.add_to_list_node_path(_index_node_start)
+
+                return_value = solution_container_single_exit_new.get_sum_cost_path_complete()
+
             # Add Solution Container to the Priority Queue.
-            heapq.heappush(heap_queue_priority, solution_container_new)
-            # print(heap_queue_priority)
+            heapq.heappush(heap_queue_priority, solution_container_single_exit_new)
 
-        # if (entry_sum_value_min_plus_sum_cost_path_direct_full != entry_sum_cost_path_direct_full_new):
-        #     # Add Solution Container to the Priority Queue.
-        #     heapq.heappush(heap_queue_priority, solution_container_new)
-        #     # print(heap_queue_priority)
+        if (entry_sum_value_min_plus_sum_cost_path_direct_full > entry_sum_cost_path_direct_full_new):
+            solution_container_single_entry_new = SolutionContainerSingle(solution_container_single_current)
+
+            solution_container_single_entry_new.set_sum_cost_path_complete(
+                entry_sum_value_min_plus_sum_cost_path_direct_full)
+            solution_container_single_entry_new.set_index_node_target(index_row_node_selected)
+            solution_container_single_entry_new.set_sum_cost_path_direct_full(entry_sum_cost_path_direct_full_new)
+            solution_container_single_entry_new.add_to_list_node_path(index_row_node_selected)
+
+            if len(solution_container_single_entry_new.get_list_node_path()) == len(matrix):
+                sum_value = matrix[_index_node_start][index_row_node_selected]
+
+                entry_sum_cost_path_direct_full_new += sum_value
+
+                solution_container_single_entry_new.set_sum_cost_path_complete(
+                    entry_sum_value_min_plus_sum_cost_path_direct_full)
+                solution_container_single_entry_new.set_sum_cost_path_direct_full(entry_sum_cost_path_direct_full_new)
+                solution_container_single_entry_new.set_index_node_target(_index_node_start)
+                solution_container_single_entry_new.add_to_list_node_path(_index_node_start)
+
+                return_value = solution_container_single_entry_new.get_sum_cost_path_complete()
+
+            # Add Solution Container to the Priority Queue.
+            heapq.heappush(heap_queue_priority, solution_container_single_entry_new)
 
         # set_exit_index_node_traveled_to.pop()  # Implicit removal of index_row_node_selected
         set_exit_index_node_traveled_to.remove(index_row_node_selected)  # Explicit removal of index_node_child
@@ -1230,7 +1223,7 @@ def branch_and_bound_node_exit_entry(matrix,
     Returning -1 implies that an Upper has been created. Uppers are only made when a path has traversed all nodes 
     and has returned to the Node Starting.
     """
-    return -1
+    return return_value
 
 
 @decorator_callable_count(dict_k_callable_v_amount_call_given=dict_k_callable_v_amount_call)
@@ -1238,16 +1231,16 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
                                         index_node_start: int = 0,
                                         function_branch_and_bound=branch_and_bound_node_exit
                                         ):
-    heap_queue_priority: Union[List[SolutionContainer], List] = []
+    heap_queue_priority: Union[List[SolutionContainerSingle], List] = []
     upper = -1
 
-    list_solutions: Union[List[SolutionContainer], List] = []
+    list_solutions: Union[List[SolutionContainerSingle], List] = []
 
     is_initial_run = True
 
     while heap_queue_priority or is_initial_run:
 
-        path_solution_temp: Union[SolutionContainer, None] = None
+        path_solution_temp: Union[SolutionContainerSingle, None] = None
 
         # tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct: Union[Tuple[int, int, List, int],
         #                                                                              None] = None
@@ -1286,8 +1279,7 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
             # sum_direct_selected = tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct[3]
 
             # If list_node_path has traversed every node and has reached the end.
-            if (len(path_solution_temp.get_entry_list_node_path()) == (len(matrix) + 1) or
-                    len(path_solution_temp.get_exit_list_node_path()) == (len(matrix) + 1)):
+            if len(path_solution_temp.get_list_node_path()) == (len(matrix) + 1):
 
                 print("Solution Container may be a Valid Solution")
 
@@ -1320,7 +1312,7 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
             # sum_direct_selected = 0
             # # set_index_node_traveled_to = set()
 
-            path_solution_temp = SolutionContainer(index_node_start)
+            path_solution_temp = SolutionContainerSingle(index_node_start)
 
         ##################################################################################################
 
@@ -1352,9 +1344,9 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
 
 
 def main():
-    # example_1()
+    example_1()
     print(f"\n{'#' * 150}\n")
-    example_2()
+    # example_2()
 
 
 def example_tester(matrix):
