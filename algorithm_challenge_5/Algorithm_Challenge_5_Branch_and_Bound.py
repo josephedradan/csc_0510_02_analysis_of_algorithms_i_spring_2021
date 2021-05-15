@@ -1352,9 +1352,9 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
 
 
 def main():
-    # example_1()
+    example_1()
     print(f"\n{'#' * 150}\n")
-    example_2()
+    # example_2()
 
 
 def example_tester(matrix):
