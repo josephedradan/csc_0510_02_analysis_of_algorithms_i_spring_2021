@@ -132,6 +132,11 @@ class SolutionContainerSingle:
 
 
 class SolutionContainer:
+    """
+    Data Container to store information used to solve the Traveling Sale Problem Matrix
+
+    """
+
     def __init__(self,
                  given: Union[int, SolutionContainer] = None):
 
@@ -140,10 +145,8 @@ class SolutionContainer:
 
             ###
             self.index_node_start: Union[int] = index_node_start
-            # self.sum_cost_path_direct: Union[int] = 0
 
             ###
-
             self.exit_sum_cost_path_complete = 0
             self.exit_index_node_parent: Union[int] = index_node_start
             self.exit_list_node_path: Union[List[int]] = [index_node_start]
@@ -165,13 +168,15 @@ class SolutionContainer:
                 set_entry_sum_cost_path
                 set_entry_index_node_child
                 set_entry_sum_cost_path_direct_full
-                
+            
+            After passing a SolutionContainer
             """
             solution_container = given
+
             ###
             self.index_node_start: Union[int] = solution_container.get_index_node_start()
-            ###
 
+            ###
             self.exit_sum_cost_path_complete: Union[int] = 0
             self.exit_index_node_parent: Union[int] = 0
             self.exit_list_node_path: Union[List[int]] = solution_container.get_exit_list_node_path().copy()
@@ -216,7 +221,6 @@ class SolutionContainer:
         self.exit_index_node_parent = index_node_parent
 
     ####
-
     def add_to_entry_list_node_path(self, index_node: int):
         self.entry_list_node_path.append(index_node)
 
@@ -241,11 +245,6 @@ class SolutionContainer:
     def set_entry_index_node_child(self, index_node_child: int):
         self.entry_index_node_child = index_node_child
 
-    # def set_standard_entry(self, index_node, value):
-    #     self.add_to_entry_list_node_path(index_node)
-    #     self.set_entry_index_node_child(index_node)
-    #     self.set_entry_sum_cost_path_direct_full(value)
-
     def __str__(self):
         return "({}, {}, {})".format(self.get_sum_cost_path_complete(),
                                      self.exit_list_node_path,
@@ -255,14 +254,7 @@ class SolutionContainer:
         return self.__str__()
 
     def __lt__(self, path_solution: SolutionContainer):
-        v1 = ((self.get_sum_cost_path_complete(),
-               self.exit_index_node_parent,
-               self.entry_index_node_child) <
-              (path_solution.get_sum_cost_path_complete(),
-               path_solution.exit_index_node_parent,
-               path_solution.entry_index_node_child))
-        v2 = (self.get_sum_cost_path_complete()) < path_solution.get_sum_cost_path_complete()
-        return v2
+        return self.get_sum_cost_path_complete() < path_solution.get_sum_cost_path_complete()
 
 
 # def solve_exit_node_first_dynamic_programming(matrix: Sequence[Sequence]):
@@ -318,10 +310,14 @@ def branch_and_bound_node_exit(matrix,
         B -> {A} = 2
     
     """
+
+    # Set of indices traveled to excluding the initial node
     set_index_node_traveled_to = set(solution_container_current.get_exit_list_node_path()[1:])
 
+    # Copy of the above set
     set_index_node_traveled_to_previous = set_index_node_traveled_to.copy()
 
+    # Loop over nodes that will be Node Selected
     for index_row_node_selected, row_main in enumerate(matrix):
 
         """
@@ -353,7 +349,7 @@ def branch_and_bound_node_exit(matrix,
             # print("Not the ending")
             continue
 
-        # Initialized sum
+        # Initialized starting path sum
         sum_value_min_plus_sum_cost_path_direct_full = 0
 
         """
@@ -372,16 +368,21 @@ def branch_and_bound_node_exit(matrix,
             A -> D -> C
             
         """
+        # Value from Parent -> Selected
         sum_cost_path_direct_parent_selected = matrix[solution_container_current.get_exit_index_node_parent()][
             index_row_node_selected]
 
-        sum_cost_path_direct_full_new = sum_cost_path_direct_parent_selected + solution_container_current.get_exit_sum_cost_path_direct_full()
+        # Get the new cost path direct full
+        sum_cost_path_direct_full_new = (sum_cost_path_direct_parent_selected +
+                                         solution_container_current.get_exit_sum_cost_path_direct_full()
+                                         )
         # A Sum of the Sum of the Minimum Value Sum of rows + Sum of the Full Direct Path
         sum_value_min_plus_sum_cost_path_direct_full += sum_cost_path_direct_full_new
 
         print("Node Parent {} -> Node Selected {}: {}".format(solution_container_current.get_exit_index_node_parent(),
                                                               index_row_node_selected,
-                                                              sum_value_min_plus_sum_cost_path_direct_full))
+                                                              sum_cost_path_direct_parent_selected))
+        print("Path Direct Full Sum:", sum_cost_path_direct_full_new)
 
         # Add Node Selected to set of Nodes traveled to (AKA Set of Nodes Excluded)
         set_index_node_traveled_to.add(index_row_node_selected)
@@ -390,7 +391,7 @@ def branch_and_bound_node_exit(matrix,
         print("set_index_node_traveled_to_previous", set_index_node_traveled_to_previous)
 
         """
-        It's not possible to make Node Potential when every node has been traversed through except for the last node.
+        It's not possible to make Node Potentials when every node has been traversed through except for the last node.
         If you assume that the dimensions of the matrix are the same, then you can say that the the size of the matrix
         represents the nodes traversed.
 
@@ -401,6 +402,7 @@ def branch_and_bound_node_exit(matrix,
         if len(set_index_node_traveled_to) == len(matrix):
             print("It's Not possible to make Node Potentials")
 
+            # Make a new solution container and assign it's initial values
             solution_container_new = SolutionContainer(solution_container_current)
             solution_container_new.set_exit_sum_cost_path_complete(sum_value_min_plus_sum_cost_path_direct_full)
             solution_container_new.set_exit_index_node_parent(index_row_node_selected)
@@ -426,17 +428,10 @@ def branch_and_bound_node_exit(matrix,
                 continue
 
             """
-            Skip Finding the Min for the Node Potential if the Node Potential is the Node Parent.
-            Node Selected == Node Potential == Node Parent. The value added to 
-            sum_value_min_plus_sum_cost_path_direct_full is added directly and not by finding the min value in the row.
-            
             Basically don't find the cost to yourself. Though if the matrix didn't have 0s on the diagonal, you can
-            remove this condition
+            remove this condition.
             """
             if index_row_node_potential == solution_container_current.get_exit_index_node_parent():
-                # Alternative to matrix[index_node_parent][index_row_node_selected] is the below:
-                # sum_cost_path_direct_full_new = matrix[index_row_node_potential][index_row_node_selected]
-                # sum_value_min_plus_sum_cost_path_direct_full += sum_cost_path_direct_full_new
                 continue
 
             """
@@ -481,10 +476,21 @@ def branch_and_bound_node_exit(matrix,
                         it's possible for index_column_node_possible to connect back to its parent which should be
                         index_row_node_potential.
                         Example:
+                            The Node Selected is B, Parent is A
                             A -> B = 3
                             B -> {C, D, A} = 1  # You don't want B to connect back to A because A already points to B
                             C -> {A, D} = 5
                             D -> {A, C} = 6
+                            
+                            The Node Selected is D, Parent is A (Correct Answer path)
+                            A -> D = 4
+                            D -> {B, C, A} = 6  # You don't want D to connect back to A because A already points to D
+                            B -> {A, C} = 2
+                            C -> {A, B} = 3
+                            
+                            The Node Selected it B, Parent is C
+                            A -> D -> C -> B = 12
+                            B -> {A} = 3  # You want B to connect to A here
                         """
                         if index_column_node_possible == solution_container_current.get_index_node_start():
                             continue
@@ -509,6 +515,7 @@ def branch_and_bound_node_exit(matrix,
         print("Sum of Minimum values + Cost of path direct full: {}\n".format(
             sum_value_min_plus_sum_cost_path_direct_full))
 
+        # Make new Solution container and initialize defaults
         solution_container_new = SolutionContainer(solution_container_current)
         solution_container_new.set_exit_sum_cost_path_complete(sum_value_min_plus_sum_cost_path_direct_full)
         solution_container_new.set_exit_index_node_parent(index_row_node_selected)
@@ -581,14 +588,16 @@ def branch_and_bound_node_entry(matrix,
         A -> {D} = 4
 
     """
+    # Set of indices traveled to excluding the initial node
     set_index_node_traveled_to = set(solution_container_current.get_entry_list_node_path()[1:])
 
+    # Copy of the above set
     set_index_node_traveled_to_previous = set_index_node_traveled_to.copy()
 
     for index_row_node_selected, row_main in enumerate(matrix):
 
         """
-        Skip the Node Selected if the Node Selected is the Node Parent (Prevent calculations to self).
+        Skip the Node Selected if the Node Selected is the Node Child (Prevent calculations to self).
 
         IMPORTANT NOTE:
             THIS WILL PREVENT index_row_node_selected FROM BEING REMOVED FROM THE set_index_node_traveled_to
@@ -616,7 +625,7 @@ def branch_and_bound_node_entry(matrix,
             # print("Not the ending")
             continue
 
-        # Initialized sum
+        # Initialized starting path sum
         sum_value_min_plus_sum_cost_path_direct_full = 0
 
         """
@@ -636,10 +645,11 @@ def branch_and_bound_node_entry(matrix,
 
         """
 
-        # (Code Difference) The Positions of index_row_node_selected and index_node_child are swapped
+        # (Code Difference) Selected points to Child (Child <- Selected)
         sum_cost_path_direct_selected_child = matrix[index_row_node_selected][
             solution_container_current.get_entry_index_node_child()]
 
+        # Get the new cost path direct full
         sum_cost_path_direct_full_new = (sum_cost_path_direct_selected_child +
                                          solution_container_current.get_entry_sum_cost_path_direct_full())
 
@@ -648,7 +658,8 @@ def branch_and_bound_node_entry(matrix,
 
         print("Node Selected {} -> Node Child {}: {}".format(index_row_node_selected,
                                                              solution_container_current.get_entry_index_node_child(),
-                                                             sum_value_min_plus_sum_cost_path_direct_full))
+                                                             sum_cost_path_direct_selected_child))
+        print("Path Direct Full Sum:", sum_cost_path_direct_full_new)
 
         """
         Add Node Child to set of Nodes traveled to (AKA Set of Nodes Excluded)
@@ -663,7 +674,7 @@ def branch_and_bound_node_entry(matrix,
         print("set_index_node_traveled_to_previous", set_index_node_traveled_to_previous)
 
         """
-        It's not possible to make Node Potential when every node has been traversed through except for the last node.
+        It's not possible to make Node Potentials when every node has been traversed through except for the last node.
         If you assume that the dimensions of the matrix are the same, then you can say that the the size of the matrix
         represents the nodes traversed.
 
@@ -674,6 +685,7 @@ def branch_and_bound_node_entry(matrix,
         if len(set_index_node_traveled_to) == len(matrix):
             print("It's Not possible to make Node Potentials")
 
+            # Make a new solution container and assign it's initial values
             solution_container_new = SolutionContainer(solution_container_current)
             solution_container_new.set_entry_sum_cost_path_complete(sum_value_min_plus_sum_cost_path_direct_full)
             solution_container_new.set_entry_index_node_child(index_row_node_selected)
@@ -691,7 +703,7 @@ def branch_and_bound_node_entry(matrix,
         """
         Loop through rows in the matrix
         (Code Difference) This loop is now ranged based and now uses pseudo indices
-        (THIS WILL CRASH IF MATRIX DOES NOT HAVE THE SAME DIMENSION)
+        (THIS WILL CRASH IF THE MATRIX DOES NOT HAVE THE SAME DIMENSIONS)
         """
         for index_pseudo_column_node_potential in range(len(matrix)):
 
@@ -726,7 +738,7 @@ def branch_and_bound_node_entry(matrix,
             """
             Traverse through current row to select the Min in the row   
             (Code Difference) This loop is now ranged based and now uses pseudo indices
-            (THIS WILL CRASH IF MATRIX DOES NOT HAVE THE SAME DIMENSION)
+            (THIS WILL CRASH IF HE MATRIX DOES NOT HAVE THE SAME DIMENSIONS)
             """
             for index_pseudo_row_node_possible in range(len(matrix[index_pseudo_column_node_potential])):
 
@@ -759,6 +771,17 @@ def branch_and_bound_node_entry(matrix,
 
                         This Condition will not be reached if the Last Node Potential is the Node Potential that equals 
                         the Node Starting.
+                        
+                        Example:
+                            The Node Selected is B, Child is A
+                                A <- B = 2
+                                C -> {B, D} = 3
+                                D -> {B, C] = 6
+                                A -> {C, D, B} = 4  # You don't want A to connect to B because B already connects to A
+                            
+                            The Node Selected is D, Child is C 
+                                A <- B <- C <- D = 11
+                                A -> {D} = 4 # You want A to connect to the Selected because it's the last node
                         """
                         if index_pseudo_row_node_possible == index_row_node_selected:
                             continue
@@ -784,6 +807,7 @@ def branch_and_bound_node_entry(matrix,
         print("Sum of Minimum values + Cost of path direct full: {}\n".format(
             sum_value_min_plus_sum_cost_path_direct_full))
 
+        # Make new Solution container and initialize defaults
         solution_container_new = SolutionContainer(solution_container_current)
         solution_container_new.set_entry_sum_cost_path_complete(sum_value_min_plus_sum_cost_path_direct_full)
         solution_container_new.set_entry_index_node_child(index_row_node_selected)
@@ -854,13 +878,18 @@ def branch_and_bound_node_exit_entry(matrix,
         B -> {A} = 2
 
     """
-    set_exit_index_node_traveled_to = set(solution_container_current.get_exit_list_node_path()[
-                                          1:])  # TODO UNNCESSSARY BECASE WE FUCK THE SET UP BECAUEAS WE TRAVEL TO ALL OF THEM
 
+    # FIXME UNNECESSARY BECAUSE ALL POINTS POSITIONS IN THE GRID ARE CONSIDERED SO THE SET EXCLUSION TRICK WILL NOT WORK
+    # Set of indices traveled to excluding the initial node
+    set_exit_index_node_traveled_to = set(solution_container_current.get_exit_list_node_path()[1:])
+
+    # Set of indices traveled to excluding the initial node
     set_entry_index_node_traveled_to = set(solution_container_current.get_entry_list_node_path()[1:])
 
+    # Copy of the first above set
     set_exit_index_node_traveled_to_previous = set_exit_index_node_traveled_to.copy()
 
+    # Copy of the second above set
     set_entry_index_node_traveled_to_previous = set_entry_index_node_traveled_to.copy()
 
     # Parent
@@ -874,6 +903,7 @@ def branch_and_bound_node_exit_entry(matrix,
 
     for index_row_node_selected, row_main in enumerate(matrix):
 
+        # FIXME THE BELOW 2 ARE REMOVED BECAUSE THEY ARE NOT NEEDED
         # # Skip the Node Selected if the Node Selected is the Node Target (Prevent calculations to self).
         # if index_row_node_selected == solution_container_current.get_exit_index_node_parent():
         #     print("SEL PAR")
@@ -894,7 +924,7 @@ def branch_and_bound_node_exit_entry(matrix,
             # print("Not the ending")
             continue
 
-        # Initialized sum
+        # Initialized starting path sum for Exit and Entry
         exit_sum_value_min_plus_sum_cost_path_direct_full = 0
         entry_sum_value_min_plus_sum_cost_path_direct_full = 0
 
@@ -916,74 +946,91 @@ def branch_and_bound_node_exit_entry(matrix,
 
         """
 
-        # (Code Difference) The Positions of index_row_node_selected and index_node_child are swapped
+        # Value from Parent -> Selected
         exit_sum_cost_path_direct_parent_selected = matrix[_exit_index_node_parent][index_row_node_selected]
 
+        # Value from Child <- Selected
         entry_sum_cost_path_direct_selected_child = matrix[index_row_node_selected][_entry_index_node_child]
 
+        # Calculate direct path for exit path
         exit_sum_cost_path_direct_full_new = (exit_sum_cost_path_direct_parent_selected +
                                               solution_container_current.get_exit_sum_cost_path_direct_full())
 
+        # Calculate direct path for exit path
         entry_sum_cost_path_direct_full_new = (entry_sum_cost_path_direct_selected_child +
                                                solution_container_current.get_entry_sum_cost_path_direct_full())
 
-        # A Sum of the Sum of the Minimum Value Sum of rows + Sum of the Full Direct Path
+        # (Exit) A Sum of the Sum of the Minimum Value Sum of rows + Sum of the Full Direct Path
         exit_sum_value_min_plus_sum_cost_path_direct_full += exit_sum_cost_path_direct_full_new
 
+        # (Entry) A Sum of the Sum of the Minimum Value Sum of rows + Sum of the Full Direct Path
         entry_sum_value_min_plus_sum_cost_path_direct_full += entry_sum_cost_path_direct_full_new
 
         print("(Exit) Node Parent {} -> Node Selected {}: {}".format(_exit_index_node_parent,
                                                                      index_row_node_selected,
-                                                                     exit_sum_value_min_plus_sum_cost_path_direct_full))
-
-        # exit_sum_cost_path_direct_full_new = exit_sum_cost_path_direct_parent_selected + solution_container_current.get_entry_index_node_child()
+                                                                     exit_sum_cost_path_direct_parent_selected))
+        print("(Exit) Path Direct Full Sum:", exit_sum_cost_path_direct_full_new)
 
         print("(Entry) Node Selected {} -> Node Child {}: {}".format(index_row_node_selected,
                                                                      _entry_index_node_child,
-                                                                     entry_sum_value_min_plus_sum_cost_path_direct_full))
+                                                                     entry_sum_cost_path_direct_selected_child))
+        print("(Entry) Path Direct Full Sum:", entry_sum_cost_path_direct_full_new)
 
         """
         Add Node Child to set of Nodes traveled to (AKA Set of Nodes Excluded)
         (Code Difference) index_node_child replaces index_row_node_selected
         """
 
-        set_exit_index_node_traveled_to.add(
-            index_row_node_selected)  # TODO UNNCESSSARY BECASE WE FUCK THE SET UP BECAUEAS WE TRAVEL TO ALL OF THEM
+        # FIXME THE BELOW IS UNNECESSARY BECAUSE THE SET EXCLUSION TRICK DOES NOT WORK HERE
+        # set_exit_index_node_traveled_to.add(index_row_node_selected)
 
         set_entry_index_node_traveled_to.add(_index_node_start)
         set_entry_index_node_traveled_to.add(_entry_index_node_child)
 
-        print("set_exit_index_node_traveled_to",
-              set_exit_index_node_traveled_to)  # TODO ITS SUPPOSED TO BE BROKEN BECAUSE WE HAVE TO TRAVEL TO ALL OF THE NODES WHCIH FUCKS THE SET
+        print("set_exit_index_node_traveled_to", set_exit_index_node_traveled_to)
         print("set_exit_index_node_traveled_to_previous", set_exit_index_node_traveled_to_previous)
 
         print("set_entry_index_node_traveled_to", set_entry_index_node_traveled_to)
         print("set_entry_index_node_traveled_to_previous", set_entry_index_node_traveled_to_previous)
 
         """
-        It's not possible to make Node Potential when every node has been traversed through except for the last node.
+        It's not possible to make Node Potentials when every node has been traversed through except for the last node.
         If you assume that the dimensions of the matrix are the same, then you can say that the the size of the matrix
         represents the nodes traversed.
 
         Basically, you have traversed to every node, so you don't need to loop through the matrix and all you
         really need to do is add list_node_path to the path and you have traveled to every node and have gone
         back to the Node Starting.
+        
+        IMPORTANT NOTE:
+            THE BELOW IS UNCLEAN CODE AND SUPPORTS A VERSION OF THE CODE THAT WAS MEANT FOR ME TO TEST AND FIGURE OUT
+            WHAT I WAS DOING. THE TEST WAS TO DO BOTH THE EXIT AND ENTRY NODES AT THE SAME TIME, BUT THAT WAS AN
+            INCORRECT APPROACH.
+            
+        """
+        """
+        THIS DOES NOT TAKE IN ACCOUNT 
+        exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column
+        FROM BELOW
         """
         if (len(solution_container_current.get_exit_list_node_path()) == len(matrix) or
                 len(solution_container_current.get_entry_list_node_path()) == len(matrix)):
             print("It's Not possible to make Node Potentials")
 
+            # Make a new solution container and assign its initial values
             solution_container_new = SolutionContainer(solution_container_current)
 
             solution_container_new.set_exit_sum_cost_path_complete(exit_sum_value_min_plus_sum_cost_path_direct_full)
             solution_container_new.set_exit_index_node_parent(index_row_node_selected)
 
+            # (Exit) Add to path
             if len(solution_container_current.get_exit_list_node_path()) == len(matrix):
                 solution_container_new.add_to_exit_list_node_path(index_row_node_selected)
 
             solution_container_new.set_entry_sum_cost_path_complete(entry_sum_value_min_plus_sum_cost_path_direct_full)
             solution_container_new.set_entry_index_node_child(index_row_node_selected)
 
+            # (Entry) Add to path
             if len(solution_container_current.get_entry_list_node_path()) == len(matrix):
                 solution_container_new.add_to_entry_list_node_path(index_row_node_selected)
 
@@ -1003,8 +1050,6 @@ def branch_and_bound_node_exit_entry(matrix,
 
         """
         Loop through rows in the matrix
-        (Code Difference) This loop is now ranged based and now uses pseudo indices
-        (THIS WILL CRASH IF MATRIX DOES NOT HAVE THE SAME DIMENSION)
         """
         for index_row_node_potential in range(len(matrix)):
 
@@ -1013,48 +1058,55 @@ def branch_and_bound_node_exit_entry(matrix,
             """
             Traverse through current row to select the Min in the row   
             (Code Difference) This loop is now ranged based and now uses pseudo indices
-            (THIS WILL CRASH IF MATRIX DOES NOT HAVE THE SAME DIMENSION)
             """
             for index_column_node_possible in range(len(matrix[index_row_node_potential])):
-
+                """
+                IMPORTANT NOTES:
+                    If you remove the "continue"s then you you will allow for not bounded Entry Node checks.
+                    What you want is that those checks need to be constrained by the the Exit Node checks because
+                    if you don't, you will have checks that have already been accounted for.  
+                """
+                # Valid Exit condition is possible
                 exit_condition_valid = True
 
+                # Valid Entry condition is possible
                 entry_condition_valid = True
 
+                # Value at position
                 value_at_row_column = matrix[index_row_node_potential][index_column_node_possible]
 
                 # Skip column if the column is on the Diagonal, Comment this out if Diagonals matter.
-                # POSSIBLE TO POTENTIAL SELF JUMP
+
+                # (Exit) If Node Possible is a Node Potential (Don't jump to self)
                 if index_column_node_possible == index_row_node_potential:
                     exit_condition_valid = False
                     entry_condition_valid = False
                     continue
 
-                ########################### ROW ###########################
-                ########################### ROW ###########################
-                ########################### ROW ###########################
-                ########################### ROW ###########################
+                ########################### Exit Checks ###########################
 
-                # TODO THIS IS FIXED
+                # FIXME This fixed the broken set check for rows but is unnecessary now because of the fixed check below
                 # if _index_node_start != _exit_index_node_parent:
                 #     # POSSIBLE IS PARENT BUT NOT FOR START
                 #     if _exit_index_node_parent == index_column_node_possible:
                 #         exit_condition_valid = False
 
-                # SELECTED IN PREVIOUS (WILL ELIMINATE SLEF CALCULATION) (MAKES AN EMPTY SOLUTION)
+                # (Exit) Node Selected in Exit Set Node Previous
                 if index_row_node_selected in set_exit_index_node_traveled_to_previous:
                     exit_condition_valid = False
                     continue
-                # POTENTIAL IN PREVIOUS
+
+                # (Exit) Node Potential in Exit Set Node Previous
                 if index_row_node_potential in set_exit_index_node_traveled_to_previous:
                     exit_condition_valid = False
                     continue
-                # POTENTIAL IS PARENT
+
+                # (Exit) Node Potential is the Node Parent
                 if index_row_node_potential == _exit_index_node_parent:
                     exit_condition_valid = False
                     continue
 
-                # POTENTIAL FOR THE END
+                # (Exit) Node Potential is Node Start AND Path is one off from being complete
                 if (index_row_node_potential == _index_node_start and
                         len(solution_container_current.get_exit_list_node_path()) < len(matrix)):
                     # print("index_row_node_potential is index_node_start, but is not the Last Node to yourself")
@@ -1073,7 +1125,6 @@ def branch_and_bound_node_exit_entry(matrix,
                     Node Selected is allowed to make the last connection to the last Node Possible which should be
                     Node Starting.
                     """
-
                     if len(solution_container_current.get_exit_list_node_path()) < (len(matrix) - 1):
                         """
                         Check if index_node_parent is index_column_node_possible, if this condition is true, then
@@ -1082,56 +1133,62 @@ def branch_and_bound_node_exit_entry(matrix,
                         it's possible for index_column_node_possible to connect back to its parent which should be
                         index_row_node_potential.
                         Example:
+                            The Node Selected is B, Parent is A
                             A -> B = 3
                             B -> {C, D, A} = 1  # You don't want B to connect back to A because A already points to B
                             C -> {A, D} = 5
                             D -> {A, C} = 6
+
+                            The Node Selected is D, Parent is A (Correct Answer path)
+                            A -> D = 4
+                            D -> {B, C, A} = 6  # You don't want D to connect back to A because A already points to D
+                            B -> {A, C} = 2
+                            C -> {A, B} = 3
+
+                            The Node Selected it B, Parent is C
+                            A -> D -> C -> B = 12
+                            B -> {A} = 3  # You want B to connect to A here
                         """
                         if index_column_node_possible == solution_container_current.get_index_node_start():
                             exit_condition_valid = False
                             continue
 
-                # POSSIBLE IN THE SET (WE DONT HAVE SET ANYMORE) ***************************
+                # (Exit) Node Possible in Exit Set Node Previous OR Node Possible is Node Selected
                 if (index_column_node_possible in set_exit_index_node_traveled_to_previous or
                         index_column_node_possible == index_row_node_selected):
                     exit_condition_valid = False
                     continue
 
+                # (Exit) If the Checks have been passed
                 if exit_condition_valid:
                     pass
                     print("\t\t-> (Exit) Node Possible {} with Value {}".format(
                         index_column_node_possible,
                         value_at_row_column))
 
-                    # ROW ASSIGNER
+                    # Find the Minimum value in the row
                     if list_value_min_per_row[index_row_node_potential] is None:
                         list_value_min_per_row[index_row_node_potential] = value_at_row_column
 
                     elif value_at_row_column < list_value_min_per_row[index_row_node_potential]:
                         list_value_min_per_row[index_row_node_potential] = value_at_row_column
 
-                ########################### COLUMN ###########################
-                ########################### COLUMN ###########################
-                ########################### COLUMN ###########################
-                ########################### COLUMN ###########################
+                ########################### Entry Checks ###########################
 
-                # print(f"\n{'#'*100}\n")
-                # print("VALUE PER ROW")
-
-                # SELECTED IN SET
+                # (Entry) Node Selected in Entry Set Node
                 if index_row_node_selected in set_entry_index_node_traveled_to:
                     entry_condition_valid = False
 
-                # POTENTIAL IN SET PREVIOUS # TODO???
+                # (Entry) Node Potential in Entry Set Node Previous
                 if index_row_node_potential in set_entry_index_node_traveled_to_previous:
                     entry_condition_valid = False
 
-                # POTENTIAL IS SELECTED
+                # (Entry) Node Potential is Node Selected (Prevent calculation from Node Selected to Node Selected)
                 if index_row_node_potential == index_row_node_selected:
                     entry_condition_valid = False
 
                 """
-                (Code Difference) Replace the old check for this check to see if the Node Potential is the Node
+                (Code Difference) Replace the old check for this check to see if the Node Potential is the Node 
                 Starting (Special case).
 
                 This is because Node Starting as a Node Potential DOES NOT know that it has been connected to by
@@ -1141,40 +1198,48 @@ def branch_and_bound_node_exit_entry(matrix,
                 if index_row_node_potential == _index_node_start:
                     """
                     Check if the size of list_node_path is less than (size of the matrix) -1. The
-                    purpose of this check is to only allow its body to run when their are still Node Potentials
-                    excluding the Node Potential that equals the Node Starting.
+                    purpose of this check is to only allow its body to run when their are still Node Potentials 
+                    excluding the Node Potential that equals the Node Starting.  
                     """
                     if len(solution_container_current.get_entry_list_node_path()) < (len(matrix) - 1):
                         """
-                        Basically, when the Node Potential equals the Node Starting while there exists Node Potentials,
+                        Basically, when the Node Potential equals the Node Starting while there exists Node Potentials, 
                         excluding the Node Potential that equals the Node Starting, then skip the Node Possible that
                         equals Node Selected.
 
-                        This Condition will not be reached if the Last Node Potential is the Node Potential that equals
+                        This Condition will not be reached if the Last Node Potential is the Node Potential that equals 
                         the Node Starting.
+
+                        Example:
+                            The Node Selected is B, Child is A
+                                A <- B = 2
+                                C -> {B, D} = 3
+                                D -> {B, C] = 6
+                                A -> {C, D, B} = 4  # You don't want A to connect to B because B already connects to A
+
+                            The Node Selected is D, Child is C 
+                                A <- B <- C <- D = 11
+                                A -> {D} = 4 # You want A to connect to the Selected because it's the last node
                         """
                         if index_column_node_possible == index_row_node_selected:
                             entry_condition_valid = False
 
-                # POTENTIAL AS SELECTED
-                if index_row_node_potential == index_row_node_selected:
-                    entry_condition_valid = False
-
-                # POSSIBLE IN THE SET
+                # (Entry) Node Possible in Entry Set Node (Don't travel back to to something already travled to)
                 if index_column_node_possible in set_entry_index_node_traveled_to:
                     entry_condition_valid = False
 
-                # POTENTIAL IS POSSIBLE
+                # (Entry) Node Potential is Node Possible (Don't jump to self)
                 if index_row_node_potential == index_column_node_possible:
                     entry_condition_valid = False
 
+                # (Entry) If the Checks have been passed
                 if entry_condition_valid:
                     pass
                     print("\t\t-> (Entry) Node Possible {} with Value {}".format(
                         index_column_node_possible,
                         value_at_row_column))
 
-                    # COLUMN ASSIGNER
+                    # Find the Minimum value in the column
                     if list_value_min_per_column[index_row_node_potential] is None:
                         list_value_min_per_column[index_row_node_potential] = value_at_row_column
 
@@ -1184,68 +1249,84 @@ def branch_and_bound_node_exit_entry(matrix,
                     if exit_condition_valid:
                         pass
 
-                #################################
-                #################################
-
+        # Initialize Sum of the min values for each row and for each column
         sum_list_value_min_per_row = 0
         sum_list_value_min_per_column = 0
 
+        # Sum of the min values for each row and for each column
         for i, j in zip(list_value_min_per_row, list_value_min_per_column):
             if isinstance(i, int):
                 sum_list_value_min_per_row += i
             if isinstance(j, int):
                 sum_list_value_min_per_column += j
 
+        # Add Min sums to appropriate sum_value_min_plus_sum_cost_path_direct_full
         exit_sum_value_min_plus_sum_cost_path_direct_full += sum_list_value_min_per_row
         entry_sum_value_min_plus_sum_cost_path_direct_full += sum_list_value_min_per_column
 
-        print("\tMinimum Value in row:", list_value_min_per_row)
-        print("\tSum Minimum Value in row:", sum_list_value_min_per_row)
-        print("\tMinimum Value in column:", list_value_min_per_column)
-        print("\tSum Minimum Value in column:", sum_list_value_min_per_column)
-        print("\tMinimum Value in row + Minimum Value in column:",
-              sum_list_value_min_per_row + sum_list_value_min_per_column)
-        print("(Exit) Sum of Minimum values + Cost of path direct full: {}".format(
-            exit_sum_value_min_plus_sum_cost_path_direct_full))
-        print("(Entry) Sum of Minimum values + Cost of path direct full: {}".format(
-            entry_sum_value_min_plus_sum_cost_path_direct_full))
-        print("(Exit + Entry) Sum of Minimum values + Cost of path direct full: {}".format(
-            exit_sum_value_min_plus_sum_cost_path_direct_full + entry_sum_value_min_plus_sum_cost_path_direct_full)
-        )
         exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column = (
-                exit_sum_value_min_plus_sum_cost_path_direct_full + sum_list_value_min_per_column
-        )
-        print("(Exit) Sum of Minimum values + Cost of path direct full + Sum Minimum Value in column: {}".format(
-            exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column))
-        print()
+                exit_sum_value_min_plus_sum_cost_path_direct_full + sum_list_value_min_per_column)
 
+        # Debugging prints
+        print("\tMinimum Value in row: {}\n"
+              "\tSum Minimum Value in row: {}\n"
+              "\tMinimum Value in column: {}\n"
+              "\tSum Minimum Value in column: {}\n"
+              "\tSum Minimum Value in row + Sum Minimum Value in column: {}\n"
+              "(Exit) Sum of Minimum values + Cost of path direct full: {}\n"
+              "(Entry) Sum of Minimum values + Cost of path direct full: {}\n"
+              "(Exit + Entry) Sum of Minimum values + Cost of path direct full: {}\n"
+              "(Exit) Sum of Minimum values + Cost of path direct full + Sum Minimum Value in column: {}\n".format(
+            list_value_min_per_row,
+            sum_list_value_min_per_row,
+            list_value_min_per_column,
+            sum_list_value_min_per_column,
+            sum_list_value_min_per_row + sum_list_value_min_per_column,
+            exit_sum_value_min_plus_sum_cost_path_direct_full,
+            entry_sum_value_min_plus_sum_cost_path_direct_full,
+            exit_sum_value_min_plus_sum_cost_path_direct_full + entry_sum_value_min_plus_sum_cost_path_direct_full,
+            exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column
+        ))
+
+        # Make new Solution container
         solution_container_new = SolutionContainer(solution_container_current)
 
+        # THIS WILL ONLY USE THE EXIT CALCULATIONS
         # solution_container_new.set_exit_sum_cost_path_complete(exit_sum_value_min_plus_sum_cost_path_direct_full)
+
+        # THIS WILL WILL USE THE EXIT CALCULATIONS + SUM OF MIN VALUES FROM THE COLUMNS
         solution_container_new.set_exit_sum_cost_path_complete(
             exit_sum_value_min_plus_sum_cost_path_direct_full_plus_sum_list_value_min_per_column)
+
+        # (Exit) Standard initialize
         solution_container_new.set_exit_index_node_parent(index_row_node_selected)
         solution_container_new.set_exit_sum_cost_path_direct_full(exit_sum_cost_path_direct_full_new)
         solution_container_new.add_to_exit_list_node_path(index_row_node_selected)
 
+        # IF YOU WANTED TO CALCULATE FOR ENTRY NODES, USE THE BELOW, AND (ONLY ALLOWING ENTRY NODES TO PASS)
         # solution_container_new.set_entry_sum_cost_path_complete(entry_sum_value_min_plus_sum_cost_path_direct_full)
+
+        # (Entry) Standard initialize
         # solution_container_new.set_entry_index_node_child(index_row_node_selected)
         # solution_container_new.set_entry_sum_cost_path_direct_full(entry_sum_cost_path_direct_full_new)
         # solution_container_new.add_to_entry_list_node_path(index_row_node_selected)
 
-        # # TODO NEED TO REMOVE ME LATER TO WORK PROPERLY
+        # ONLY ALLOWING EXIT NODES TO PASS
         if (exit_sum_value_min_plus_sum_cost_path_direct_full > exit_sum_cost_path_direct_full_new):
             # Add Solution Container to the Priority Queue.
             heapq.heappush(heap_queue_priority, solution_container_new)
             # print(heap_queue_priority)
 
-        # if (entry_sum_value_min_plus_sum_cost_path_direct_full != entry_sum_cost_path_direct_full_new):
+        # ONLY ALLOWING ENTRY NODES TO PASS
+        # if (entry_sum_value_min_plus_sum_cost_path_direct_full > entry_sum_cost_path_direct_full_new):
         #     # Add Solution Container to the Priority Queue.
         #     heapq.heappush(heap_queue_priority, solution_container_new)
         #     # print(heap_queue_priority)
 
         # set_exit_index_node_traveled_to.pop()  # Implicit removal of index_row_node_selected
-        set_exit_index_node_traveled_to.remove(index_row_node_selected)  # Explicit removal of index_node_child
+
+        # FIXME: UNNECESSARY REMOVAL FROM set_exit_index_node_traveled_to
+        # set_exit_index_node_traveled_to.remove(index_row_node_selected)  # Explicit removal of index_node_child
         set_entry_index_node_traveled_to.remove(_entry_index_node_child)  # Explicit removal of index_node_child
 
     """
@@ -1301,12 +1382,6 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
         # If a Solution Container is Selected
         if solution_container_temp:
 
-            # Initialize temp variables for ease of use
-            # sum_total_selected = tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct[0]
-            # index_selected = tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct[1]
-            # list_node_path_selected = tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct[2]
-            # sum_direct_selected = tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct[3]
-
             # If list_node_path has traversed every node and has reached the end.
             if (len(solution_container_temp.get_entry_list_node_path()) == (len(matrix) + 1) or
                     len(solution_container_temp.get_exit_list_node_path()) == (len(matrix) + 1)):
@@ -1323,24 +1398,10 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
                     list_solutions.append(solution_container_temp)
                 continue
 
-            # New Style (If this crashes then there is a bug)
-            # set_index_node_traveled_to = set(list_node_path_selected[1:])
-
-            # # Fill up set based on list_node_path_selected
-            # for i in range(1, len(list_node_path_selected)):
-            #     set_index_node_traveled_to.add(list_node_path_selected[i])
-
         # If a Solution Container is not Selected. This is the initial run, it is only ran once.
         else:
             # Allow the Main while loop to exit if the Priority Queue is empty
             is_initial_run = False
-
-            # Initialize Defaults
-            # sum_total_selected = 0
-            # index_selected = index_node_start
-            # list_node_path_selected = [index_parent]
-            # sum_direct_selected = 0
-            # # set_index_node_traveled_to = set()
 
             solution_container_temp = SolutionContainer(index_node_start)
 
@@ -1375,9 +1436,9 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
 
 
 def main():
-    example_1()
+    # example_1()
     print(f"\n{'#' * 150}\n")
-    # example_2()
+    example_2()
 
 
 def example_tester(matrix):
