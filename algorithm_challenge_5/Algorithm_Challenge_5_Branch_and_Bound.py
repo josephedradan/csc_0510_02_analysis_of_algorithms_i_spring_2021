@@ -1269,7 +1269,7 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
 
     while heap_queue_priority or is_initial_run:
 
-        path_solution_temp: Union[SolutionContainer, None] = None
+        solution_container_temp: Union[SolutionContainer, None] = None
 
         # tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct: Union[Tuple[int, int, List, int],
         #                                                                              None] = None
@@ -1279,14 +1279,14 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
             print("Upper Exists, Will Trim and Select from the Priority Queue")
 
             # Select from the priority queue a Solution Container's Sum Total == Upper
-            path_solution_temp = heapq.heappop(heap_queue_priority)
+            solution_container_temp = heapq.heappop(heap_queue_priority)
 
             print("Solution Container Currently Selected",
-                  path_solution_temp)
+                  solution_container_temp)
 
             # Less than or equal to will allow errors to pass for me to make sure i'm doing the right operations
-            if path_solution_temp.get_sum_cost_path_complete() <= upper:
-                print(path_solution_temp)
+            if solution_container_temp.get_sum_cost_path_complete() <= upper:
+                print(solution_container_temp)
                 print("Solution Container Currently Selected Is valid")
             else:
                 print("Solution Container Currently Selected Is invalid")
@@ -1294,12 +1294,12 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
 
         # Select a Solution Container from the Priority Queue if not empty (If this crashes then there is a bug)
         elif heap_queue_priority:
-            path_solution_temp = heapq.heappop(heap_queue_priority)
+            solution_container_temp = heapq.heappop(heap_queue_priority)
             print("No Upper Exists, Will Pop from Solution Container from the Priority Queue:",
-                  path_solution_temp)
+                  solution_container_temp)
 
         # If a Solution Container is Selected
-        if path_solution_temp:
+        if solution_container_temp:
 
             # Initialize temp variables for ease of use
             # sum_total_selected = tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct[0]
@@ -1308,19 +1308,19 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
             # sum_direct_selected = tuple_selected_0_sum_total_1_index_2_list_node_path_3_sum_path_direct[3]
 
             # If list_node_path has traversed every node and has reached the end.
-            if (len(path_solution_temp.get_entry_list_node_path()) == (len(matrix) + 1) or
-                    len(path_solution_temp.get_exit_list_node_path()) == (len(matrix) + 1)):
+            if (len(solution_container_temp.get_entry_list_node_path()) == (len(matrix) + 1) or
+                    len(solution_container_temp.get_exit_list_node_path()) == (len(matrix) + 1)):
 
                 print("Solution Container may be a Valid Solution")
 
                 # If a Actual Solution
-                if path_solution_temp.get_sum_cost_path_complete() == upper:
+                if solution_container_temp.get_sum_cost_path_complete() == upper:
                     print("Solution Container is a Valid Solution")
                     print(heap_queue_priority)
-                    print(path_solution_temp)
+                    print(solution_container_temp)
                     print()
 
-                    list_solutions.append(path_solution_temp)
+                    list_solutions.append(solution_container_temp)
                 continue
 
             # New Style (If this crashes then there is a bug)
@@ -1342,16 +1342,17 @@ def branch_and_bound_bfs_priority_queue(matrix: Sequence[Sequence[int]],
             # sum_direct_selected = 0
             # # set_index_node_traveled_to = set()
 
-            path_solution_temp = SolutionContainer(index_node_start)
+            solution_container_temp = SolutionContainer(index_node_start)
 
         ##################################################################################################
 
         # print("\nPath Selected:", list_node_path_selected)
-        print("STUFF OVER HERE", path_solution_temp)
+        print("Solution Container Selected:", solution_container_temp)
+        print()
 
         upper_potential = function_branch_and_bound(matrix,
                                                     heap_queue_priority,
-                                                    path_solution_temp
+                                                    solution_container_temp
                                                     )
 
         # If an Upper has been returned
@@ -1380,17 +1381,17 @@ def main():
 
 
 def example_tester(matrix):
-    # print("Consider Exit Only Solution")
-    # solutions_exit = branch_and_bound_bfs_priority_queue(matrix,
-    #                                                      function_branch_and_bound=branch_and_bound_node_exit)
-    # print(f"\n{'=' * 200}\n")
-    #
-    # print("Consider Entry Only Solution")
-    # solutions_entry = branch_and_bound_bfs_priority_queue(matrix,
-    #                                                       function_branch_and_bound=branch_and_bound_node_entry)
-    # print(f"\n{'=' * 200}\n")
+    print("Consider Exit Only Calculation")
+    solutions_exit = branch_and_bound_bfs_priority_queue(matrix,
+                                                         function_branch_and_bound=branch_and_bound_node_exit)
+    print(f"\n{'=' * 200}\n")
 
-    print("Consider Exit and Entry (Exit is Priority) Solution")
+    print("Consider Entry Only Calculation")
+    solutions_entry = branch_and_bound_bfs_priority_queue(matrix,
+                                                          function_branch_and_bound=branch_and_bound_node_entry)
+    print(f"\n{'=' * 200}\n")
+
+    print("Consider Exit and Entry (Exit is Priority?) Calculation")
     solutions_exit_entry = branch_and_bound_bfs_priority_queue(matrix,
                                                                function_branch_and_bound=branch_and_bound_node_exit_entry)
     print(f"\n{'=' * 200}\n")
@@ -1399,17 +1400,17 @@ def example_tester(matrix):
     print(numpy.array(matrix), end="\n")
     print()
 
-    # print("Solution Containers (Exit only)")
-    # for i in solutions_exit:
-    #     print(i)
-    # print()
-    #
-    # print("Solution Containers (Entry only)")
-    # for i in solutions_entry:
-    #     print(i)
-    # print()
+    print("Solution Containers (Exit only)")
+    for i in solutions_exit:
+        print(i)
+    print()
 
-    print("Solution Containers (Exit and Entry (Exit is Priority))")
+    print("Solution Containers (Entry only)")
+    for i in solutions_entry:
+        print(i)
+    print()
+
+    print("Solution Containers (Exit and Entry, Exit is Priority?)")
     for i in solutions_exit_entry:
         print(i)
     print()
