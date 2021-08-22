@@ -29,10 +29,10 @@ Reference:
 
 """
 
-from pycode_recorder.code_recorder import AlgorithmRecorder
-from josephs_resources.decorators.callgraph_simple import callgraph, create_callgraph
+from python_code_analyzer.python_code_analyzer import CodeRecorder
+from joseph_resources.decorators.callgraph_simple import callgraph, create_callgraph
 
-algorithm_recorder = AlgorithmRecorder()
+algorithm_recorder = CodeRecorder()
 
 
 @algorithm_recorder.decorator_wrapper_callable
@@ -69,7 +69,7 @@ def merge_sort(list_given: list) -> list:
     list_new = []
     while True:
 
-        algorithm_recorder.iteration_scope_start("i", ignore_counter)
+        algorithm_recorder.event_iteration_start("i", ignore_counter)
         # If both left and right list still have elements in them
         if len(list_left) > 0 and len(list_right) > 0:
             # If first item from left list <= first item of right list
@@ -104,7 +104,7 @@ def merge_sort(list_given: list) -> list:
             break
 
         ignore_counter += 1
-        algorithm_recorder.iteration_scope_end_none()
+        algorithm_recorder.event_iteration_end()
 
     print("List new:", list_new)
     return list_new

@@ -82,7 +82,7 @@ Reference:
 """
 import numpy
 from Algorithm_Challenge_4_Backtracking_Generalized_Correct_Partially import print_algorithm_challenge_4_solution_inner
-from josephs_resources.decorators.callgraph_simple import callgraph, create_callgraph
+from joseph_resources.decorators.callgraph_simple import callgraph, create_callgraph
 from typing import List, Union, Set, Tuple, Sequence
 
 counter_iterations = 0
@@ -577,7 +577,7 @@ def main():
 
     # testing_one_complete_solution()
 
-    create_callgraph(type_ouput="png")
+    create_callgraph(type_output="png")
 
 
 if __name__ == '__main__':

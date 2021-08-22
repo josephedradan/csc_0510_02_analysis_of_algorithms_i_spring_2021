@@ -20,9 +20,9 @@ Reference:
 
 """
 
-from pycode_recorder.code_recorder import AlgorithmRecorder
+from python_code_analyzer.python_code_analyzer import CodeRecorder
 
-algorithm_recorder = AlgorithmRecorder()
+algorithm_recorder = CodeRecorder()
 
 
 @algorithm_recorder.decorator_wrapper_callable  # Ignore me
@@ -31,12 +31,12 @@ def algorithm_challenge_01(string, n):
 
     i = 1
     while i <= n:
-        algorithm_recorder.iteration_scope_start("For loop Outer (i)", i)  # Ignore me
+        algorithm_recorder.event_iteration_start("For loop Outer (i)", i)  # Ignore me
         # print(i)
 
         j = 1
         while j <= i:
-            algorithm_recorder.iteration_scope_start("For loop Inner (j)", j)  # Ignore me
+            algorithm_recorder.event_iteration_start("For loop Inner (j)", j)  # Ignore me
             # print("\t", j)
 
             print(string)
@@ -44,10 +44,10 @@ def algorithm_challenge_01(string, n):
             j = j * 2
 
             count += 1
-            algorithm_recorder.iteration_scope_end_none()  # Ignore me
+            algorithm_recorder.event_iteration_end()  # Ignore me
 
         i = i + 1
-        algorithm_recorder.iteration_scope_end_none()  # Ignore me
+        algorithm_recorder.event_iteration_end()  # Ignore me
 
     print(f"Count: {count}")
 
